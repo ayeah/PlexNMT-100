@@ -1,0 +1,16 @@
+
+*.pyc
+
+/NMTSettings.cfg
+
+/Settings.cfg
+
+PlexNMT.log
+
+*.cer
+
+*.key
+
+*.pem
+
+*.der
