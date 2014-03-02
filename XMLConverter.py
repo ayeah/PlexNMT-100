@@ -461,9 +461,8 @@ def XML_PMS2NMT(PMS_baseURL, path, options):
             nmtback = etree.XSLT.strparam(path[:path.rfind("/")])
     NMThtml = transform(PMS, PMSURL=pmsurl, NMTpath=nmtpath, NMTstart=nmtstart, NMTback=nmtback, NMTview=nmtview)
 	
-    # get XMLtemplate
-#    NMTTree = etree.parse(sys.path[0]+'/assets/templates/'+XMLtemplate)
-#    NMTroot = NMTTree.getroot()
+    # convert the summary cr lf into <br> </br>
+    insertBR(NMThtml.getroot())
     
     # convert PMS XML to NMT HTML using provided XMLtemplate
 #    global g_CommandCollection
@@ -479,6 +478,46 @@ def XML_PMS2NMT(PMS_baseURL, path, options):
     #return etree.tostring(NMTroot)
     return str(NMThtml)
 
+def insertBR(elem):
+    nodes = elem.findall(".//*[@class='summary']")
+    if len(nodes):
+        dprint ('insertBR', 1, "Found summary ", __name__)
+        for elem in nodes:
+            dprint ('insertBR', 1, "Node Text: " + elem.text, __name__)
+            if "\r" in elem.text:
+                dprint ('insertBR', 1, "Converting CR to <br> </br>.", __name__)
+                parts = elem.text.splitlines()
+                dprint ('insertBR', 2, "Split lines into " + str(len(parts)) + " parts.", __name__)
+                for index, part in enumerate(parts):
+                    if index == 0:
+                        elem.text = part
+                    else:
+                        if index == 1:
+                            newchilda = etree.Element('br')
+                            newchilda.text = ' '
+                            elem.insert(-1,  newchilda)
+                        newchild = etree.Element('br')
+                        newchild.tail = part 
+                        newchild.text = ' '
+                        elem.insert(-1,  newchild)
+            elif "\n" in elem.text:
+                dprint ('insertBR', 1, "Converting LF to <br> </br><br> </br>.", __name__)
+                parts = elem.text.splitlines()
+                dprint ('insertBR', 2, "Split lines into " + str(len(parts)) + " parts.", __name__)
+                for index, part in enumerate(parts):
+                    if index == 0:
+                        dprint ('insertBR', 2, "Part " + str(index) + " = '" + part + "'", __name__)
+                        elem.text = part
+                    else:
+                        if index == 1:
+                            newchilda = etree.Element('br')
+                            newchilda.text = ' '
+                            elem.insert(-1,  newchilda)
+                        dprint ('insertBR', 2, "Part " + str(index) + " = '" + part + "'", __name__)
+                        newchild = etree.Element('br')
+                        newchild.tail = part  
+                        newchild.text = ' '
+                        elem.insert(-1,  newchild)
 
 
 def XML_ExpandTree(elem, src, srcXML):

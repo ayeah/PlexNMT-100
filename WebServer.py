@@ -218,7 +218,7 @@ class MyHandler(BaseHTTPRequestHandler):
                     return
 
                 # serve "/index.html" 
-                if self.path == "/":
+                if self.path == "/" and 0:
                     dprint(__name__, 1, "serving /index.html")
                     f = open(sys.path[0] + sep + "assets" + sep + "index.html", "rb")
                     self.send_response(200)

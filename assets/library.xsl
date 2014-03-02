@@ -52,6 +52,7 @@ NMTview = "library" or "detail"
 	   a.infom { font-size:22px;text-decoration:none; color: B1D3F6 }
 	   .menu {font-size:18px;color: 999999;font-weight:bold;}
 	   .text {font-size:18px;color: AAAAAA;font-weight:bold;}
+	   .summary {font-size:18px;color: FFFFFF;font-weight:bold;}
 	   .info {font-size:18px;color: FFFFFF;font-weight:bold;}
 	   .infol {font-size:28px;color: FFFFFF;font-weight:bold; }
 	   .infom {font-size:22px;color: FFFFFF;font-weight:bold; }
@@ -77,18 +78,21 @@ NMTview = "library" or "detail"
     
     <script type="text/javascript">
 	  var markee = 1;
-	  function show(mykey, mylink)
+	  function show(mykey, mylink, vod)
 	  {
 		if ( markee == 1 )
 		  markee = document.getElementById('markee');
-		markee.firstChild.nodeValue = document.getElementById('key'+mykey).title;
+		markee.firstChild.nodeValue = document.getElementById(mykey).title;
 		var play = document.getElementById('play');
 		if (mylink != '') {
 			play.setAttribute('href', mylink);
 			play.setAttribute('tvid', 'PLAY');
+			if (vod) {
+				play.setAttribute('vod', vod);  //used only for playlists.
+			}
 		}
 	  }
-	  function hide(x)
+	  function hide()
 	  {
 		if ( markee == 1 )
 		  markee = document.getElementById('markee');
@@ -221,10 +225,6 @@ NMTview = "library" or "detail"
        <td width="100%" valign="top" bgcolor="#2F2F2F" colspan="2">
       <table border="0" cellspacing="0" cellpadding="5" name="rows">
 
-		<xsl:if test="Directory and not(@viewGroup='album' or @viewGroup='artist' or @viewGroup='show' or @viewGroup='season') and (@size &gt; 1 or (@size=1 and not(Directory/@type='album' or Directory/@type='artist' or Directory/@type='show' or Directory/@type='season')))">
-            <!-- show directory rows -->
-           <xsl:apply-templates select="Directory[(position() mod $drow-size) = 1 and position() &gt;= $ds and position() &lt; $de]" mode="library" />
-    	</xsl:if>
         <xsl:if test="Directory and (@viewGroup='album' or @viewGroup='artist' or @viewGroup='show' or @viewGroup='season')">
             <!-- show episode and music collection rows -->
            <xsl:apply-templates select="Directory[(position() mod $row-size) = 1 and position() &gt;= $vs and position() &lt; $ve]" mode="episode" />
@@ -245,6 +245,12 @@ NMTview = "library" or "detail"
     
         <!-- show track rows -->
         <xsl:apply-templates select="Track[ position() &gt;= $ts and position() &lt; $te]" mode="library"/>
+
+		<xsl:if test="Directory and not(@viewGroup='album' or @viewGroup='artist' or @viewGroup='show' or @viewGroup='season') and (@size &gt; 1 or (@size=1 and not(Directory/@type='album' or Directory/@type='artist' or Directory/@type='show' or Directory/@type='season')))">
+            <!-- show directory rows -->
+           <xsl:apply-templates select="Directory[(position() mod $drow-size) = 1 and position() &gt;= $ds and position() &lt; $de ]" mode="library" />
+    	</xsl:if>
+
       </table>
      </td></tr>
       
@@ -362,7 +368,7 @@ NMTview = "library" or "detail"
    </xsl:choose>
  </table>
  <script type="text/javascript">
- 	hide(1);
+ 	hide();
  </script>
 
 </xsl:template>
@@ -371,38 +377,66 @@ NMTview = "library" or "detail"
 <xsl:template match="Video" mode="library">
      <!-- VIDEOS -->
 
-       <xsl:variable name="item-no" select="position()" />
+       <xsl:variable name="row-no" select="position()" />
          <tr>
            <xsl:for-each select=". | following-sibling::Video[position() &lt; $row-size]">
+            <xsl:variable name="item-no" select="(($row-no - 1) * $row-size) + position()"/>
             <td class="vid" width="150px" height="160px" valign="bottom" align="center">
              <a tvid="">
                <xsl:attribute name="name">
-                 <xsl:number value="position()" format="1" />
+                 <xsl:number value="$item-no" format="1" />
                </xsl:attribute>
                <xsl:attribute name="id">
-                 <xsl:value-of select="concat('key', @ratingKey)"/>
+                 <xsl:value-of select="concat('video', $item-no)"/>
                </xsl:attribute>
                <xsl:attribute name="title">
                  <xsl:value-of select="@title"/>
                </xsl:attribute>
                <xsl:attribute name="onfocus">
-                 <xsl:value-of select="concat('show(', @ratingKey, ', ', $squote, $PMSURL, Media/Part/@key, $squote, ')')"/>
+                  <xsl:choose>
+                   <xsl:when test="starts-with(Media/Part/@key, '/:') and contains(Media/Part/@key, 'mediaInfo')">
+                 	 <xsl:value-of select="concat('show(', $squote, 'video', $item-no, $squote, ', ', $squote, substring-before(Media/Part/@key, '&amp;mediaInfo'), '&amp;PlexNMTXSL=play.xsl', $squote, ',', $squote, 'playlist', $squote, ')')"/>
+                   </xsl:when>
+                   <xsl:when test="starts-with(Media/Part/@key, '/:')">
+                 	 <xsl:value-of select="concat('show(', $squote, 'video', $item-no, $squote, ', ', $squote, Media/Part/@key, '&amp;PlexNMTXSL=play.xsl', $squote, ',', $squote, 'playlist', $squote,  ')')"/>
+                   </xsl:when>
+                   <xsl:otherwise>
+                 	 <xsl:value-of select="concat('show(', $squote, 'video', $item-no, $squote, ', ', $squote, $PMSURL, Media/Part/@key, $squote, ')')"/>
+                   </xsl:otherwise>
+                  </xsl:choose>            
                </xsl:attribute>
                <xsl:attribute name="onblur">
-                 <xsl:value-of select="concat('hide(', @ratingKey, ')')"/>
+                 <xsl:value-of select="'hide()'"/>
                </xsl:attribute>
                <xsl:attribute name="HREF">
                  <xsl:value-of select="concat(@key, '?PlexNMTview=video')"/>
                </xsl:attribute>
              <img class="thumb" width="110px" >
                <xsl:attribute name="SRC">
-                 <xsl:value-of select="concat($PMSURL, @thumb)"/>
+                 <xsl:choose>
+                   <xsl:when test="starts-with(@thumb, 'http')">
+                     <xsl:value-of select="@thumb"/>
+                   </xsl:when>
+                   <xsl:otherwise>
+                 	 <xsl:value-of select="concat($PMSURL, @thumb)"/>
+                   </xsl:otherwise>
+                 </xsl:choose>
                </xsl:attribute>
                <xsl:attribute name="onmouseover">
-                 <xsl:value-of select="concat('show(', @ratingKey, ', ', $squote, $PMSURL, Media/Part/@key, $squote, ')')"/>
+                  <xsl:choose>
+                   <xsl:when test="starts-with(Media/Part/@key, '/:') and contains(Media/Part/@key, 'mediaInfo')">
+                 	 <xsl:value-of select="concat('show(', $squote, 'video', $item-no, $squote, ', ', $squote, substring-before(Media/Part/@key, '&amp;mediaInfo'), '&amp;PlexNMTXSL=play.xsl', $squote, ',', $squote, 'playlist', $squote, ')')"/>
+                   </xsl:when>
+                   <xsl:when test="starts-with(Media/Part/@key, '/:')">
+                 	 <xsl:value-of select="concat('show(', $squote, 'video', $item-no, $squote, ', ', $squote, Media/Part/@key, '&amp;PlexNMTXSL=play.xsl', $squote, ',', $squote, 'playlist', $squote,  ')')"/>
+                   </xsl:when>
+                   <xsl:otherwise>
+                 	 <xsl:value-of select="concat('show(', $squote, 'video', $item-no, $squote, ', ', $squote, $PMSURL, Media/Part/@key, $squote, ')')"/>
+                   </xsl:otherwise>
+                  </xsl:choose>            
                </xsl:attribute>
                <xsl:attribute name="onmouseout">
-                 <xsl:value-of select="concat('hide(', @ratingKey, ')')"/>
+                 <xsl:value-of select="'hide()'"/>
                </xsl:attribute>
              </img></a>
             </td>
@@ -423,76 +457,80 @@ NMTview = "library" or "detail"
 <!-- ********************** LIST OF DIRECTORIES (Folders) *************** -->
 <xsl:template match="Directory" mode="library">  
 
-         <xsl:variable name="item-no" select="position()" />
+         <xsl:variable name="row-no" select="position()" />
          <tr>
-           <xsl:for-each select=". | following-sibling::Directory[position() &lt; $drow-size]">
-             <td class="dir"  align="center" valign="top" width="130px">
-             <a>
-               <xsl:attribute name="name">
-                 <xsl:number value="position()" format="1" />
-               </xsl:attribute>
-               <xsl:attribute name="HREF">
-			     <xsl:choose>
-				   <xsl:when test="starts-with(@key, '/')">
-					 <xsl:value-of select="@key" />
-				   </xsl:when>
-				   <xsl:otherwise>
-					 <xsl:value-of select="concat($NMTpath, '/', @key)"/>
-				   </xsl:otherwise>
-				 </xsl:choose>
-               </xsl:attribute>
-               <xsl:attribute name="id">
-                 <xsl:value-of select="concat('key', @key)"/>
-               </xsl:attribute>
-               <xsl:attribute name="title">
-                 <xsl:value-of select="@title"/>
-               </xsl:attribute>
-               <xsl:attribute name="onfocus">
-                 <xsl:value-of select="concat('show(', $squote, @key, $squote, ', ', $squote, $squote, ')')"/>
-               </xsl:attribute>
-               <xsl:attribute name="onblur">
-                 <xsl:value-of select="concat('hide(',  $squote, @key, $squote, ')')"/>
-               </xsl:attribute>
-             <img class="dirthumb" src="/folder.png">
-               <xsl:attribute name="onmouseover">
-                 <xsl:value-of select="concat('show(', $squote, @key, $squote, ', ', $squote, $squote, ')')"/>
-               </xsl:attribute>
-               <xsl:attribute name="onmouseout">
-                 <xsl:value-of select="concat('hide(', $squote, @key, $squote, ')')"/>
-               </xsl:attribute>
-             </img></a>
-             <br></br>
-               <xsl:value-of select="substring(@title,1,20)"/>
-               <xsl:if test="substring(@title,21)">
-                  <xsl:value-of select="'...'"/>
-               </xsl:if>
-           </td>
+           <xsl:for-each select=". | following-sibling::Directory[position() &lt; $drow-size]  ">
+             <xsl:variable name="item-no" select="(($row-no - 1) * $drow-size) + position()"/>
+             <xsl:if test="$NMTpath != '' or (@key != 'clients' and @key != 'playQueues' and @key != 'player' and @key != 'playlists' and @key != 'search' and @key != 'servers' and @key != 'system' and @key != 'transcode')">
+                 <td class="dir"  align="center" valign="top" width="130px">
+                 <a>
+                   <xsl:attribute name="name">
+                     <xsl:number value="$item-no" format="1" />
+                   </xsl:attribute>
+                   <xsl:attribute name="HREF">
+                     <xsl:choose>
+                       <xsl:when test="starts-with(@key, '/')">
+                         <xsl:value-of select="@key" />
+                       </xsl:when>
+                       <xsl:otherwise>
+                         <xsl:value-of select="concat($NMTpath, '/', @key)"/>
+                       </xsl:otherwise>
+                     </xsl:choose>
+                   </xsl:attribute>
+                   <xsl:attribute name="id">
+                     <xsl:value-of select="concat('dir', $item-no)"/>
+                   </xsl:attribute>
+                   <xsl:attribute name="title">
+                     <xsl:value-of select="@title"/>
+                   </xsl:attribute>
+                   <xsl:attribute name="onfocus">
+                     <xsl:value-of select="concat('show(', $squote, 'dir', $item-no, $squote, ', ', $squote, $squote, ')')"/>
+                   </xsl:attribute>
+                   <xsl:attribute name="onblur">
+                     <xsl:value-of select="'hide()'"/>
+                   </xsl:attribute>
+                 <img class="dirthumb" src="/folder.png">
+                   <xsl:attribute name="onmouseover">
+                     <xsl:value-of select="concat('show(', $squote, 'dir', $item-no, $squote, ', ', $squote, $squote, ')')"/>
+                   </xsl:attribute>
+                   <xsl:attribute name="onmouseout">
+                     <xsl:value-of select="'hide()'"/>
+                   </xsl:attribute>
+                 </img></a>
+                 <br></br>
+                   <xsl:value-of select="substring(@title,1,20)"/>
+                   <xsl:if test="substring(@title,21)">
+                      <xsl:value-of select="'...'"/>
+                   </xsl:if>
+               </td>
+           </xsl:if>
        </xsl:for-each>
        </tr>
 </xsl:template>
 
-<!-- ***************** GALLERY of EPISODES, SEASONS, ARTISTS, ALBUMS *********************** -->
+<!-- ***************** GALLERY of COLLECTIONS: EPISODES, SEASONS, ARTISTS, ALBUMS *********************** -->
 <xsl:template match="Directory" mode="episode">
 
-         <xsl:variable name="item-no" select="position()" />
+         <xsl:variable name="row-no" select="position()" />
          <tr>
            <xsl:for-each select=". | following-sibling::Directory[position() &lt; $row-size]">
+            <xsl:variable name="item-no" select="(($row-no - 1) * $row-size) + position()"/>
             <td class="vid" align="center" valign="bottom">
              <a>
                <xsl:attribute name="name">
-                 <xsl:number value="position()" format="1" />
+                 <xsl:number value="$item-no" format="1" />
                </xsl:attribute>
                <xsl:attribute name="id">
-                 <xsl:value-of select="concat('key', @ratingKey)"/>
+                 <xsl:value-of select="concat('col', $item-no)"/>
                </xsl:attribute>
                <xsl:attribute name="title">
                  <xsl:value-of select="@title"/>
                </xsl:attribute>
                <xsl:attribute name="onfocus">
-                 <xsl:value-of select="concat('show(', @ratingKey, ', ', $squote, $squote, ')')"/>
+                 <xsl:value-of select="concat('show(', $squote, 'col', $item-no, $squote, ', ', $squote, $squote, ')')"/>
                </xsl:attribute>
                <xsl:attribute name="onblur">
-                 <xsl:value-of select="concat('hide(', @ratingKey, ')')"/>
+                 <xsl:value-of select="'hide()'"/>
                </xsl:attribute>
                <xsl:attribute name="HREF">
 			     <xsl:choose>
@@ -505,16 +543,16 @@ NMTview = "library" or "detail"
 				 </xsl:choose>
                </xsl:attribute>
                <xsl:attribute name="id">
-                 <xsl:value-of select="concat('key', @ratingKey)"/>
+                 <xsl:value-of select="concat('col', $item-no)"/>
                </xsl:attribute>
                <xsl:attribute name="title">
                  <xsl:value-of select="@title"/>
                </xsl:attribute>
                <xsl:attribute name="onfocus">
-                 <xsl:value-of select="concat('show(', @ratingKey, ', ', $squote, $squote, ')')"/>
+                 <xsl:value-of select="concat('show(', $squote, 'col', $item-no, $squote, ', ', $squote, $squote, ')')"/>
                </xsl:attribute>
                <xsl:attribute name="onblur">
-                 <xsl:value-of select="concat('hide(', @ratingKey, ')')"/>
+                 <xsl:value-of select="'hide()'"/>
                </xsl:attribute>
              <img class="thumb">
                <xsl:attribute name="SRC">
@@ -534,10 +572,10 @@ NMTview = "library" or "detail"
                  </xsl:choose>
                </xsl:attribute>
                <xsl:attribute name="onmouseover">
-                 <xsl:value-of select="concat('show(', @ratingKey, ', ', $squote, $squote, ')')"/>
+                 <xsl:value-of select="concat('show(', $squote, 'col', $item-no, $squote, ', ', $squote, $squote, ')')"/>
                </xsl:attribute>
                <xsl:attribute name="onmouseout">
-                 <xsl:value-of select="concat('hide(', @ratingKey, ')')"/>
+                 <xsl:value-of select="'hide()'"/>
                </xsl:attribute>
              </img></a>
             </td>
@@ -585,25 +623,26 @@ NMTview = "library" or "detail"
 <xsl:template match="Photo" mode="library">
      <!-- PHOTOS -->
 
-         <xsl:variable name="item-no" select="position()" />
+         <xsl:variable name="row-no" select="position()" />
          <tr>
            <xsl:for-each select=". | following-sibling::Photo[position() &lt; $row-size]">
+            <xsl:variable name="item-no" select="(($row-no - 1) * $row-size) + position()"/>
             <td class="vid" align="center" valign="bottom">
              <a>
                <xsl:attribute name="name">
-                 <xsl:number value="position()" format="1" />
+                 <xsl:number value="$item-no" format="1" />
                </xsl:attribute>
                <xsl:attribute name="id">
-                 <xsl:value-of select="concat('key', @ratingKey)"/>
+                 <xsl:value-of select="concat('photo', $item-no)"/>
                </xsl:attribute>
                <xsl:attribute name="title">
                  <xsl:value-of select="@title"/>
                </xsl:attribute>
                <xsl:attribute name="onfocus">
-                 <xsl:value-of select="concat('show(', @ratingKey, ', ', $squote, $squote, ')')"/>
+                 <xsl:value-of select="concat('show(', $squote, 'photo', $item-no, $squote, ', ', $squote, $squote, ')')"/>
                </xsl:attribute>
                <xsl:attribute name="onblur">
-                 <xsl:value-of select="concat('hide(', @ratingKey, ')')"/>
+                 <xsl:value-of select="'hide()'"/>
                </xsl:attribute>
                <xsl:attribute name="HREF">
                  <xsl:value-of select="concat($NMTpath, '?PlexNMTview=photo&amp;PlexNMTstart=', @ratingKey)"/>
@@ -613,10 +652,10 @@ NMTview = "library" or "detail"
                  <xsl:value-of select="concat($PMSURL, @thumb)"/>
                </xsl:attribute>
                <xsl:attribute name="onmouseover">
-                 <xsl:value-of select="concat('show(', $squote, @ratingKey, $squote, ', ', $squote, $squote, ')')"/>
+                 <xsl:value-of select="concat('show(', $squote, 'photo', $item-no, $squote, ', ', $squote, $squote, ')')"/>
                </xsl:attribute>
                <xsl:attribute name="onmouseout">
-                 <xsl:value-of select="concat('hide(', $squote, @ratingKey, $squote, ')')"/>
+                 <xsl:value-of select="'hide()'"/>
                </xsl:attribute>
              </img>
              </a>
@@ -645,13 +684,22 @@ NMTview = "library" or "detail"
 
 <!-- ******************** VIDEO DETAIL ************************** -->
 <xsl:template match="MediaContainer" mode="video">  
+  
   <table width="100%" style="height: 100%;" cellpadding="10" cellspacing="0" border="0">
     <tr>
      <td colspan="3" style="height: 40px;" bgcolor="#252525" class="server">
       <table cellpadding="0" cellspacing="0" border="0" width="100%">
         <tr valign="middle">
-          <td valign="middle" style="height: 40px;" bgcolor="#252525" class="server"><a href="/"  tvid="home">
-            <font size="+3" color="#FFCC00">PlexNMT</font></a>
+          <td valign="middle" style="height: 40px;" bgcolor="#252525" class="server">
+		   <img width="10px" src="/spacer.png"/>
+			<a tvid="back" href="javascript:history.go(-1);">
+            <img height="45px" src="/arrowup.png" class="server" style="display:inline-block;"/>
+			<img width="15px" src="/spacer.png"/>
+            </a>
+
+			<a href="/"  tvid="home">
+		     <img src="/home.png" height="40px" class="server"/>
+			</a>
           </td>
          </tr>
       </table>
@@ -666,8 +714,16 @@ NMTview = "library" or "detail"
                 <tr class="infom">
                   <td colspan="3">
                     <img  width="280px" height="auto" >
-                    <xsl:attribute name="SRC"><xsl:value-of select="concat($PMSURL, Video/@thumb)"/></xsl:attribute></img>
-                    <!--img src="http://192.168.15.210:32400/library/metadata/6/thumb/1381188242" width="280px" height="auto"/ -->
+                    <xsl:attribute name="SRC">
+                     <xsl:choose>
+                       <xsl:when test="starts-with(Video/@thumb, 'http')">
+                         <xsl:value-of select="Video/@thumb"/>
+                       </xsl:when>
+                       <xsl:otherwise>
+                         <xsl:value-of select="concat($PMSURL, Video/@thumb)"/>
+                       </xsl:otherwise>
+                     </xsl:choose>
+					</xsl:attribute></img>
                   </td>
                 </tr>
                 <tr>
@@ -677,7 +733,38 @@ NMTview = "library" or "detail"
                 <tr>
                   <td colspan="3" align="center" bgcolor="#FF9900">
                     <a name="1" vod="" tvid="play" style="color:#000">
-                    <xsl:attribute name="HREF"><xsl:value-of select="concat($PMSURL, Video/Media/Part/@key)"/></xsl:attribute>
+                      <xsl:choose>
+                      	<xsl:when test="starts-with(Video/Media/Part/@key, '/:') and contains(Video/Media/Part/@key, '?')">
+	                      <xsl:attribute name="HREF">
+                            <xsl:choose>
+                              <!-- the mediaInfo tag makes it too long for NMT to play. -->
+                              <xsl:when test="contains(Video/Media/Part/@key, 'mediaInfo')">
+                                <xsl:value-of select="concat(substring-before(Video/Media/Part/@key, '&amp;mediaInfo'), '&amp;PlexNMTXSL=play.xsl')"/>
+                              </xsl:when>
+                              <xsl:otherwise>
+                            	<xsl:value-of select="concat(Video/Media/Part/@key, '&amp;PlexNMTXSL=play.xsl')"/>
+                               </xsl:otherwise>
+                             </xsl:choose>
+                          </xsl:attribute>
+	                      <xsl:attribute name="vod">
+                            <xsl:value-of select="'playlist'"/>
+                          </xsl:attribute>
+                        </xsl:when>
+                        <xsl:when test="starts-with(Video/Media/Part/@key, '/:')">
+	                      <xsl:attribute name="vod">
+                            <xsl:value-of select="'playlist'"/>
+                          </xsl:attribute>
+	                      <xsl:attribute name="HREF">
+                            <xsl:value-of select="concat(Video/Media/Part/@key, '?PlexNMTXSL=play.xsl')"/>
+                          </xsl:attribute>
+                        </xsl:when>
+                        <xsl:otherwise>
+                          <xsl:attribute name="vod"/>
+	                      <xsl:attribute name="HREF">
+	                        <xsl:value-of select="concat($PMSURL, Video/Media/Part/@key)"/>
+                          </xsl:attribute>
+                        </xsl:otherwise>
+                      </xsl:choose>
                     Play</a>
                   </td>
                 </tr>
@@ -773,7 +860,9 @@ NMTview = "library" or "detail"
                       </xsl:otherwise>
                     </xsl:choose>
 	                <br></br>
-                    <xsl:value-of select="format-number(Video/@rating, '###.##')"/> / 10
+                    <xsl:if test="Video/@rating">
+                      <xsl:value-of select="format-number(Video/@rating, '###.##')"/> / 10
+                    </xsl:if>
 	              </td>
                 </tr>
                 <tr>
@@ -783,21 +872,29 @@ NMTview = "library" or "detail"
                 </tr>
                 <tr>
                   <td colspan="2" class="infom">
-                	DIRECTOR:  
-                    <xsl:apply-templates select="Video/Director" mode="detail"/><br></br>
-
-    	            WRITER: 
-                    <xsl:apply-templates select="Video/Writer" mode="detail"/><br></br>
-
-            	    CAST: 
-                    <xsl:apply-templates select="Video/Role[position() &lt;= $maxrole]" mode="detail"/><br></br>
-        	        AUDIO: 
-                    <xsl:apply-templates select="Video/Media/Part/Stream[@streamType=2]" mode="audio"/>
+                    <xsl:if test="Video/Director">
+                	  DIRECTOR:  
+                      <xsl:apply-templates select="Video/Director" mode="detail"/><br></br>
+					</xsl:if>
+                    
+                    <xsl:if test="Video/Writer">
+    	              WRITER: 
+                      <xsl:apply-templates select="Video/Writer" mode="detail"/><br></br>
+					</xsl:if>
+                    
+                    <xsl:if test="Video/Role">
+            	      CAST: 
+                      <xsl:apply-templates select="Video/Role[position() &lt;= $maxrole]" mode="detail"/><br></br>
+                    </xsl:if>
+                    <xsl:if test="Video/Media/Part/Stream[@streamType=2]">
+          	          AUDIO: 
+                      <xsl:apply-templates select="Video/Media/Part/Stream[@streamType=2]" mode="audio"/>
+                    </xsl:if>
                   </td>
                 </tr>
                 <tr height="20" ><td> </td></tr>
                 <tr>
-                  <td colspan="2" class="info">
+                  <td colspan="2" class="summary">
                   <xsl:value-of select="Video/@summary"/>
                   </td>
                 </tr>
@@ -812,7 +909,7 @@ NMTview = "library" or "detail"
         </table>
       </td>
     </tr>
-    <tr>
+    <!--tr>
       <td align="center"  bgcolor="#252525">
         <table width="100%" name="footer"  bgcolor="#252525">
           <tr>
@@ -826,7 +923,7 @@ NMTview = "library" or "detail"
           </tr>
         </table>
       </td>
-    </tr>
+    </tr-->
   </table>
 </xsl:template>
 
