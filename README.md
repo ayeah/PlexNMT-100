@@ -43,3 +43,8 @@ Limitations
 
 * The older browser lacks many capabilities.  Transparent fan-art displayed behind the detailed screen. Styles appear to be limited.  Overall, the UI is limited, but improvements could be made (look at the YAMJ!).
 
+Change Log
+----------
+
+Ver 0.1.1 - Implemented support for video channels using play.xsl.  I've tested this with TED and Vimeo.  To get to the channels, I eliminated the index.html, so that the root level of the Plex is accessible.  This is not very pretty, so something to work on next revision.  Also, the video channel behavior is not perfect - certain paths using the "up" link end up nowhere, so it's best to just use the "back" button.  Also, the detailed video information page has been cleaned up to match other pages, and handle the absence of some attributes.  Remember, you can press "Play" on the highlighted video from the video gallery - you don't need to open the detail view to play a video.
+
