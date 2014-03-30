@@ -50,3 +50,7 @@ Ver 0.1.1 - Implemented support for video channels using play.xsl.  I've tested 
 
 The detailed video information page has been cleaned up to match other pages, and handle the absence of some attributes.  Remember, you can press "Play" on the highlighted video from the video gallery - you don't need to open the detail view to play a video.
 
+Ver 0.1.2 - Added setup instructions for Ubuntu/Linux and Windows.  Fixed a problem with playing music plug-ins (tested with Plex Podcast).  Found an issue with the YouTube plug-in - the URLs to play the videos are too long for the NMT browser and don't work.  Other video plug-ins so far are ok.  I will try to figure out a way to trim the URL parameters so that it still works.
+
+Also updated the web server to use an index.html in the assets directory, if it exists.  If it does not exist, then the root of the plex server tree is shown (i.e., channels, library, video, music, etc.).  You can create an index.html that takes you directly to the library or all channels, if you want.  I've included a sample redirector html file.
+
