@@ -218,15 +218,18 @@ class MyHandler(BaseHTTPRequestHandler):
                     return
 
                 # serve "/index.html" 
-                if self.path == "/" and 0:
+                if self.path == "/":
                     dprint(__name__, 1, "serving /index.html")
-                    f = open(sys.path[0] + sep + "assets" + sep + "index.html", "rb")
-                    self.send_response(200)
-                    self.send_header('Content-type', 'text/html')
-                    self.end_headers()
-                    self.wfile.write(f.read())
-                    f.close()
-                    return
+                    try:
+                        f = open(sys.path[0] + sep + "assets" + sep + "index.html", "rb")
+                        self.send_response(200)
+                        self.send_header('Content-type', 'text/html')
+                        self.end_headers()
+                        self.wfile.write(f.read())
+                        f.close()
+                        return
+                    except:
+                        dprint(__name__, 1, "No index.html; using root of pms")
 
                 # get everything else from XMLConverter 
                 if True:

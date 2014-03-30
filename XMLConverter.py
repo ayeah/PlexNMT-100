@@ -483,41 +483,44 @@ def insertBR(elem):
     if len(nodes):
         dprint ('insertBR', 1, "Found summary ", __name__)
         for elem in nodes:
-            dprint ('insertBR', 1, "Node Text: " + elem.text, __name__)
-            if "\r" in elem.text:
-                dprint ('insertBR', 1, "Converting CR to <br> </br>.", __name__)
-                parts = elem.text.splitlines()
-                dprint ('insertBR', 2, "Split lines into " + str(len(parts)) + " parts.", __name__)
-                for index, part in enumerate(parts):
-                    if index == 0:
-                        elem.text = part
-                    else:
-                        if index == 1:
-                            newchilda = etree.Element('br')
-                            newchilda.text = ' '
-                            elem.insert(-1,  newchilda)
-                        newchild = etree.Element('br')
-                        newchild.tail = part 
-                        newchild.text = ' '
-                        elem.insert(-1,  newchild)
-            elif "\n" in elem.text:
-                dprint ('insertBR', 1, "Converting LF to <br> </br><br> </br>.", __name__)
-                parts = elem.text.splitlines()
-                dprint ('insertBR', 2, "Split lines into " + str(len(parts)) + " parts.", __name__)
-                for index, part in enumerate(parts):
-                    if index == 0:
-                        dprint ('insertBR', 2, "Part " + str(index) + " = '" + part + "'", __name__)
-                        elem.text = part
-                    else:
-                        if index == 1:
-                            newchilda = etree.Element('br')
-                            newchilda.text = ' '
-                            elem.insert(-1,  newchilda)
-                        dprint ('insertBR', 2, "Part " + str(index) + " = '" + part + "'", __name__)
-                        newchild = etree.Element('br')
-                        newchild.tail = part  
-                        newchild.text = ' '
-                        elem.insert(-1,  newchild)
+            try:
+                dprint ('insertBR', 1, "Node Text: " + elem.text, __name__)
+                if "\r" in elem.text:
+                    dprint ('insertBR', 1, "Converting CR to <br> </br>.", __name__)
+                    parts = elem.text.splitlines()
+                    dprint ('insertBR', 2, "Split lines into " + str(len(parts)) + " parts.", __name__)
+                    for index, part in enumerate(parts):
+                        if index == 0:
+                            elem.text = part
+                        else:
+                            if index == 1:
+                                newchilda = etree.Element('br')
+                                newchilda.text = ' '
+                                elem.insert(-1,  newchilda)
+                            newchild = etree.Element('br')
+                            newchild.tail = part 
+                            newchild.text = ' '
+                            elem.insert(-1,  newchild)
+                elif "\n" in elem.text:
+                    dprint ('insertBR', 1, "Converting LF to <br> </br><br> </br>.", __name__)
+                    parts = elem.text.splitlines()
+                    dprint ('insertBR', 2, "Split lines into " + str(len(parts)) + " parts.", __name__)
+                    for index, part in enumerate(parts):
+                        if index == 0:
+                            dprint ('insertBR', 2, "Part " + str(index) + " = '" + part + "'", __name__)
+                            elem.text = part
+                        else:
+                            if index == 1:
+                                newchilda = etree.Element('br')
+                                newchilda.text = ' '
+                                elem.insert(-1,  newchilda)
+                            dprint ('insertBR', 2, "Part " + str(index) + " = '" + part + "'", __name__)
+                            newchild = etree.Element('br')
+                            newchild.tail = part  
+                            newchild.text = ' '
+                            elem.insert(-1,  newchild)
+            except:
+                dprint ('insertBR', 1, "Error on Summary", __name__)
 
 
 def XML_ExpandTree(elem, src, srcXML):
